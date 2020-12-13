@@ -1,26 +1,26 @@
-import {
-  Environment,
-  MockoonServer,
-  ServerErrorCodes,
-  Transaction
-} from '@mockoon/commons';
-import { readFileSync as readJSONFileSync } from 'jsonfile';
-import * as minimist from 'minimist';
-import { format } from 'util';
+#!/usr/bin/env node
+
+import minimist from 'minimist';
 import {
   createLogger,
   format as logFormat,
-  transports as logsTransports
+  transports as logsTransports,
 } from 'winston';
-import { Messages } from '../constants/messages.constants';
+import {format} from 'util';
+import {readFile as readJSONFile} from 'jsonfile';
+
+import {Environment, ServerErrorCodes, Transaction} from './common';
+import {Messages} from './constants/messages';
+import {MockoonServer} from './mockoon-server';
+import {OpenAPIConverterService} from './openapi-converter';
 
 const logger = createLogger({
   level: 'info',
   format: logFormat.combine(logFormat.timestamp(), logFormat.json()),
-  transports: [new logsTransports.Console()]
+  transports: [new logsTransports.Console()],
 });
 
-const argv = minimist<{ data: string }>(process.argv.slice(2));
+const argv = minimist<{data: string}>(process.argv.slice(2));
 
 const addEventListeners = function (
   server: MockoonServer,
@@ -29,7 +29,7 @@ const addEventListeners = function (
   server.on('started', () => {
     logger.info(format(Messages.SERVER.STARTED, environment.port));
 
-    if (!!process.send) {
+    if (process.send) {
       process.send('ready');
     }
   });
@@ -52,7 +52,7 @@ const addEventListeners = function (
         ServerErrorCodes.ROUTE_SERVING_ERROR,
         ServerErrorCodes.ROUTE_CREATION_ERROR,
         ServerErrorCodes.ROUTE_CREATION_ERROR_REGEX,
-        ServerErrorCodes.PROXY_ERROR
+        ServerErrorCodes.PROXY_ERROR,
       ].indexOf(errorCode) > -1
     ) {
       logger.error(error?.message);
@@ -80,23 +80,28 @@ const addEventListeners = function (
   });
 };
 
+const start = async (path: string) => {
+  const openApiConverter = new OpenAPIConverterService();
+  const jsonData = await readJSONFile(path, 'utf-8');
+  const environment: Environment = await openApiConverter.import(jsonData);
+  console.log(environment);
+  const server = new MockoonServer(environment, {
+    logProvider: () => ({
+      log: logger.log.bind(logger),
+      debug: logger.debug.bind(logger),
+      info: logger.info.bind(logger),
+      warn: logger.warn.bind(logger),
+      error: logger.error.bind(logger),
+    }),
+  });
+
+  addEventListeners(server, environment);
+
+  server.start();
+};
+
 if (argv.data) {
-  try {
-    const environment: Environment = readJSONFileSync(argv.data);
-    const server = new MockoonServer(environment, {
-      logProvider: () => ({
-        log: logger.log.bind(logger),
-        debug: logger.debug.bind(logger),
-        info: logger.info.bind(logger),
-        warn: logger.warn.bind(logger),
-        error: logger.error.bind(logger)
-      })
-    });
-
-    addEventListeners(server, environment);
-
-    server.start();
-  } catch (error) {
-    throw new Error(error.message);
-  }
+  start(argv.data).catch(err => {
+    throw err;
+  });
 }

@@ -1,6 +1,3 @@
-import { join } from 'path';
-import { Config } from '../config';
-
 export const Messages = {
   CLI: {
     RUNNING_PROCESSES: 'Running processes:',
@@ -8,10 +5,7 @@ export const Messages = {
     PROCESS_STARTED: 'Mock started at http://localhost:%d (pid: %d, name: %s)',
     PROCESS_NAME_USED_ERROR:
       'A process with the name "%s" is already running\nChange the environment\'s name in the data file or run start command with the "--pname" flag',
-    PROCESS_START_LOG_ERROR: `Cannot start %s due to errors (see errors in ${join(
-      Config.logsPath,
-      '%s-error.log'
-    )})`,
+    PROCESS_START_LOG_ERROR: 'Cannot start %s due to errors',
     NO_RUNNING_PROCESS_FOUND: 'No process found with pid or name "%s"',
     NO_RUNNING_PROCESS: 'No process is running',
     MISSING_INDEX_OR_NAME_ERROR:
@@ -27,11 +21,11 @@ export const Messages = {
       'Environment with name "%s" cannot be found',
     PORT_ALREADY_USED:
       'Port "%d" is already in use\nChange the environment\'s port in the data file or run start command with the "--port" flag',
-    PORT_IS_NOT_VALID: 'Port "%d" is invalid'
+    PORT_IS_NOT_VALID: 'Port "%d" is invalid',
   },
   SERVER: {
     STARTED: 'Server started on port %d',
     STOPPED: 'Server stopped',
-    CREATING_PROXY: 'Creating proxy to %s'
-  }
+    CREATING_PROXY: 'Creating proxy to %s',
+  },
 };
