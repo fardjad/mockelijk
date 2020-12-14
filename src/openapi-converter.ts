@@ -85,9 +85,14 @@ export class OpenAPIConverterService {
       server &&
       server[0] &&
       server[0].url &&
-      removeLeadingSlash(`${newUrl.pathname}${newUrl.search}` || '');
+      removeLeadingSlash(newUrl.pathname);
+    newEnvironment.port = Number(newUrl.port);
     newEnvironment.name = parsedAPI.info.title || 'OpenAPI import';
     newEnvironment.routes = this.createRoutes(parsedAPI, 'OPENAPI_V3');
+    newEnvironment.proxyMode = server[0]['x-proxy-mode'] === true;
+    newEnvironment.proxyHost = server[0]['x-proxy-host'] || '';
+    newEnvironment.proxyReqHeaders = server[0]['x-proxy-req-headers'] || [];
+    newEnvironment.proxyResHeaders = server[0]['x-proxy-res-headers'] || [];
 
     return newEnvironment;
   }
@@ -165,6 +170,9 @@ export class OpenAPIConverterService {
                   description: exampleName,
                   example: examples[exampleName].value,
                   rules: examples[exampleName]['x-rules'] || [],
+                  rulesOperator: examples[exampleName]['x-rules-operator'],
+                  disableTemplating:
+                    examples[exampleName]['x-disable-templating'],
                 };
               });
 
@@ -176,7 +184,9 @@ export class OpenAPIConverterService {
                     routeResponse,
                     contentTypeHeaders,
                     s.description,
-                    s.rules
+                    s.rules,
+                    s.rulesOperator,
+                    s.disableTemplating
                   )
                 )
               );
@@ -224,7 +234,9 @@ export class OpenAPIConverterService {
     routeResponse: OpenAPIV2.ResponseObject & OpenAPIV3.ResponseObject,
     contentTypeHeaders: string[],
     label?: string,
-    rules: ResponseRule[] = []
+    rules: ResponseRule[] = [],
+    rulesOperator: 'OR' | 'AND' = 'OR',
+    disableTemplating = false
   ) {
     const body =
       schema && Object.keys(schema).length > 0
@@ -243,6 +255,8 @@ export class OpenAPIConverterService {
         routeResponse.headers || {}
       ),
       rules,
+      rulesOperator,
+      disableTemplating,
     };
 
     return response;
