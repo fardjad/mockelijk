@@ -1,7 +1,29 @@
 #!/usr/bin/env node
 
-// eslint-disable-next-line node/shebang
-process.env.NODE_ENV = 'production';
+const minimist = require('minimist');
+const {readFile} = require('jsonfile');
 
-require('ts-node').register();
-require('../src/server.ts');
+const {OpenAPIConverterService} = require('../dist/src/openapi-converter');
+const {createServer} = require('../dist/src/server');
+
+const main = async () => {
+  const argv = minimist(process.argv.slice(2));
+
+  if (argv.data == null) {
+    console.error('Usage: mockelijk --data /path/to/oas.json');
+    throw new Error('Invalid arguments!');
+  }
+
+  const openApiConverter = new OpenAPIConverterService();
+  const jsonData = await readFile(argv.data, 'utf-8');
+  const environment = await openApiConverter.import(jsonData);
+  const server = await createServer(environment);
+  server.start();
+};
+
+main().catch(err => {
+  console.error(err.message);
+
+  // eslint-disable-next-line no-process-exit
+  process.exit(1);
+});

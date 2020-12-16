@@ -4,9 +4,7 @@
     "files": true
   },
   "compilerOptions": {
-    "noEmit": true,
     "resolveJsonModule": true,
-    "declaration": false,
     "sourceMap": false,
     "inlineSourceMap": true,
     "inlineSources": true,
@@ -14,10 +12,15 @@
     "experimentalDecorators": true,
     "noImplicitAny": false,
     "esModuleInterop": true,
-    "rootDir": "."
+    "rootDir": ".",
+    "outDir": "dist"
   },
   "include": [
     "src/**/*.ts",
     "test/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
   ]
 }
